@@ -1,0 +1,69 @@
+# This test calls subtree commands with explicit paths and branch names
+
+# exec 2>&1; set -x
+
+MKDIR dir
+
+# create the upstream repository
+cd "$dir"
+mkdir upstream
+cd upstream
+git init -q
+touch upstream-1
+git add upstream-1
+git commit -q -m "create the first upstream commit"
+touch upstream-2
+git add upstream-2
+git commit -q -m "create the second upstream commit"
+
+# create the local project
+cd "$dir"
+mkdir proj
+cd proj
+git init -q
+# create an initial commit, nothing works without it
+touch tempfile
+git add tempfile
+git commit -q -m "add meaningless tempfile to create a first commit"
+
+git-subtree add upstream "file:///$dir/upstream"
+git-subtree merge upstream/master updir/upstream
+git commit -q -m "add upstream subtree"
+
+# Now add another commit to upstream to be pulled
+cd "$dir/upstream"
+touch upstream-3
+git add upstream-3
+git commit -q -m "create the third upstream commit"
+
+# and pull it into our project
+cd "$dir/proj"
+git fetch -q upstream >/dev/null 2>&1
+echo "DIFF:"
+# suppress the last "index 0000000..e69de29" line
+git-subtree diff upstream/master | head -n -1
+git-subtree update upstream upstream/master
+git commit -q -m "update upstream subtree"
+
+echo "COMMITS:"
+git log --pretty=tformat:%s
+echo "FILES:"
+find updir
+
+cd "$dir"
+rm -rf upstream proj
+
+STDOUT:
+DIFF:
+diff --git a/upstream-3 b/upstream-3
+new file mode 100644
+COMMITS:
+update upstream subtree
+add upstream subtree
+add meaningless tempfile to create a first commit
+FILES:
+updir
+updir/upstream
+updir/upstream/upstream-3
+updir/upstream/upstream-2
+updir/upstream/upstream-1

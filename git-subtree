@@ -1,0 +1,177 @@
+#!/bin/sh
+
+# git-subtree
+# Scott Bronson, 27 May 2009
+# based on http://dysinger.net/2008/04/29/replacing-braid-or-piston-for-git-with-40-lines-of-rake/
+# also see http://www.kernel.org/pub/software/scm/git/docs/howto/using-merge-subtree.html
+
+# TODO: automatically figure out name of remote from the current dir?
+# TODO: is there any way we can avoid squashing?
+# TODO: should probably check for repos with no commits; it causes us to fail
+
+# desired usage:
+#
+# setup:
+#   mkdir -p vendor/plugins/will-paginate
+#   cd vendor/plugins/will-paginate
+#   git-subtree add git://github.com/mislav/will_paginate.git
+#   git-subtree merge master
+#   git-subtree merge vendor/plugins/will_paginate/tags/v2.3.8
+#      ("git-subtree branch" will list the branches you can use)
+#
+# update:
+#   git-subtree update vendor/plugins/will-paginate [branch]
+#   cd vendor/plugins/will-paginate
+#   git-subtree update [branch]
+# 
+#   git-subtree diff vendor/plugins/will-paginate
+#   cd vendor/plugins/will-paginate
+#   git-subtree diff
+
+cmdname="git-subtree"
+commands="add merge update diff help"
+
+
+add_help=\
+"$cmdname add <name> <url>: adds a remote repository as a tree.
+  name: the name that will refer to this remote (git help remote)
+  url: the URL of the reposiotry to fetch.
+"
+add() {
+  name="$1"
+  url="$2"
+
+  # TODO: automatically compute name from cwd and url
+  if [ "x$name" = "x" ] || [ "x$url" = "x" ]; then
+    echo "usage: $cmdname add <name> <url>"
+    return 1
+  fi
+  
+  git remote add "$name" "$url"
+  git config remote."$name".fetch refs/heads/\*:refs/remotes/"$name"/\*
+  git config --add remote."$name".fetch refs/tags/\*:refs/remotes/"$name"/tags/\*
+  git config remote."$name".tagopt --no-tags
+
+  # TODO: how do I suppress "warning: no common commits" and
+  # "From file:////tmp/tmtest.MnYyIf/upstream * [new branch]"??
+  git fetch -q "$name" >/dev/null 2>&1
+}
+
+
+merge_help=\
+"$cmdname merge [remote]
+  Merges the branch into the current directory of the repository
+"
+merge() {
+  branch="$1"
+  dest="$2"
+
+  if [ "x$branch" = "x" ]; then
+    echo "usage: $cmdname merge <branch> [<destination>]"
+    return 1
+  fi
+  if [ "x$dest" = "x" ]; then
+    dest=$(git rev-parse --show-prefix)
+  fi
+
+  # TODO: why -s ours?  (it's certainly necessary!)
+  # upside to squashing: your changes aren't drowned out by an active upstream
+  # TODO: how do I suppress "Automatic merge went well; stopped..." and
+  # "Squash commit -- not updating HEAD"??
+  git merge --squash -s ours --no-commit "$branch" >/dev/null 2>&1
+  # downside: you can't git bisect (right?) or watch upstream over time.
+  # the thing to do is to commit all these changes on a branch.  That way,
+  # git reset --hard HEAD^ will back out the entire merge, and you can use
+  # git log --not to exclude all the upstream noise on the branch.
+  # echo git merge -s ours "$branch"
+
+  git read-tree --prefix="$dest" -u "$branch"
+}
+
+
+# TODO: should I call this pull?
+update_help=\
+"Fetches changes from the subtree's upstream then merges them.
+  $cmdname update <remote> <branch>
+  EXAMPLE: git-subtree update upstream upstream/master
+"
+update() {
+  remote="$1"
+  branch="$2"
+
+  # TODO: there's GOT to be a way to get the remote name from the branch
+  if [ "x$remote" = "x" ] || [ "x$branch" = "x" ]; then
+    echo "usage: $cmdname update <remote> <branch>"
+    return 1
+  fi
+
+  # TODO: should probably only fetch the objects on our branch.
+  # no need to fetch everything.
+  # TODO: how do I suppress "warning: no common commits" and
+  # "From file:////tmp/tmtest.MnYyIf/upstream * [new branch]"??
+  git fetch -q "$remote" >/dev/null 2>&1
+  # TODO: how do I suppress "Automatic merge went well; stopped..." and
+  # "Squash commit -- not updating HEAD"??
+  git merge --squash -s subtree --no-commit "$branch" >/dev/null 2>&1
+}
+
+
+diff_help=\
+"Diffs a subtree against the remote
+"
+diff() {
+  branch="$1"
+
+  if [ "x$branch" = "x" ]; then
+    echo "usage: $cmdname update <branch>"
+    return 1
+  fi
+
+  git diff-tree -p --no-commit-id "$branch"
+}
+
+
+
+help_help="Shows help text for the given command"
+
+help() {
+  if [ "x$1" = "x" ]; then
+    echo \
+"$cmdname, like git submodule, allows you to place another git project
+into a subtree of your current project.  Unlike git submodule, however,
+you can still branch and merge when it's in your repo.
+
+   $cmdname add will_paginate git://github.com/mislav/will_paginate.git
+   $cmdname merge will_paginate/master vendor/plugins/will_paginate
+   git commit   # todo: should commit automatically
+"
+    return 0
+  fi
+
+  for i in $commands; do
+    if [ "$i" = "$1" ]; then
+      # echo $add_help if user typed 'gitree help add'
+      echo "$(eval "echo \"\$${i}_help\"")"
+      return 0
+    fi
+  done
+
+  echo "Unknown command: $1"
+  return 1
+}
+
+
+
+cmd="$1"
+for i in $commands; do
+  if [ "$i" = "$cmd" ]; then
+    shift
+    "$cmd" "$@"
+    exit $?
+  fi
+done
+
+echo "You must supply a command to execute!"
+echo "Some commands: $commands"
+exit 1
+
