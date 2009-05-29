@@ -46,6 +46,12 @@ run() {
   fi
 }
 
+die() {
+  echo "$@" >&2
+  exit 1
+}
+
+
 add_help=\
 "$cmdname add [<name>] <url>: adds a remote repository as a tree.
   name: the name that will refer to this remote (git help remote)
@@ -61,10 +67,7 @@ add() {
     
   fi
 
-  if [ "x$name" = "x" ] || [ "x$url" = "x" ]; then
-    echo "usage: $cmdname add <name> <url>"
-    return 1
-  fi
+  [ "x$name" = "x" ] || [ "x$url" = "x" ] && die "usage: $cmdname add <name> <url>"
   
   run git remote add "$name" "$url"
   run git config remote."$name".fetch refs/heads/\*:refs/remotes/"$name"/\*
@@ -85,12 +88,11 @@ merge() {
   branch="$1"
   dest="$2"
 
-  if [ "x$branch" = "x" ]; then
-    echo "usage: $cmdname merge <branch> [<destination>]"
-    return 1
-  fi
+  [ "x$branch" = "x" ] && die "usage: $cmdname merge <branch> [<destination>]"
+
   if [ "x$dest" = "x" ]; then
     dest=$(git rev-parse --show-prefix)
+    [ "x$dest" = "x" ] && die "you need to be in a subdirectory!"
   fi
 
   # TODO: why -s ours?  (it's certainly necessary!)
@@ -119,10 +121,7 @@ update() {
   branch="$2"
 
   # TODO: there's GOT to be a way to get the remote name from the branch
-  if [ "x$remote" = "x" ] || [ "x$branch" = "x" ]; then
-    echo "usage: $cmdname update <remote> <branch>"
-    return 1
-  fi
+  [ "x$remote" = "x" ] || [ "x$branch" = "x" ] && die "usage: $cmdname update <remote> <branch>"
 
   # TODO: should probably only fetch the objects on our branch.
   # no need to fetch everything.
@@ -141,10 +140,7 @@ diff_help=\
 diff() {
   branch="$1"
 
-  if [ "x$branch" = "x" ]; then
-    echo "usage: $cmdname update <branch>"
-    return 1
-  fi
+  [ "x$branch" = "x" ] && die "usage: $cmdname update <branch>"
 
   run git diff-tree -p --no-commit-id "$branch"
 }
