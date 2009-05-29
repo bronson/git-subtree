@@ -27,13 +27,27 @@
 #   git-subtree diff vendor/plugins/will-paginate
 #   cd vendor/plugins/will-paginate
 #   git-subtree diff
+#
+# Environment Variables (should probably convert into cmdline args):
+#   DRY_RUN=1 -- show what would happen but don't do it
+#   VERBOSE=1 -- display the git commands as we run them
+# usage: $ DRY_RUN=1 git-subtree add http://foo
 
 cmdname="git-subtree"
 commands="add merge update diff help"
 
+run() {
+  if [ "x$DRY_RUN" = "x" ]; then
+    [ "x$VERBOSE" != "x" ] && echo "Running: $@"
+    "$@"
+    [ "x$VERBOSE" != "x" ] && echo " Result: $?"
+  else
+    echo "Not running: $@"
+  fi
+}
 
 add_help=\
-"$cmdname add <name> <url>: adds a remote repository as a tree.
+"$cmdname add [<name>] <url>: adds a remote repository as a tree.
   name: the name that will refer to this remote (git help remote)
   url: the URL of the reposiotry to fetch.
 "
@@ -41,20 +55,25 @@ add() {
   name="$1"
   url="$2"
 
-  # TODO: automatically compute name from cwd and url
+  # If the user specified a single argument
+  if [ "x$url" = "x" ]; then
+    url="$name"
+    
+  fi
+
   if [ "x$name" = "x" ] || [ "x$url" = "x" ]; then
     echo "usage: $cmdname add <name> <url>"
     return 1
   fi
   
-  git remote add "$name" "$url"
-  git config remote."$name".fetch refs/heads/\*:refs/remotes/"$name"/\*
-  git config --add remote."$name".fetch refs/tags/\*:refs/remotes/"$name"/tags/\*
-  git config remote."$name".tagopt --no-tags
+  run git remote add "$name" "$url"
+  run git config remote."$name".fetch refs/heads/\*:refs/remotes/"$name"/\*
+  run git config --add remote."$name".fetch refs/tags/\*:refs/remotes/"$name"/tags/\*
+  run git config remote."$name".tagopt --no-tags
 
   # TODO: how do I suppress "warning: no common commits" and
   # "From file:////tmp/tmtest.MnYyIf/upstream * [new branch]"??
-  git fetch -q "$name" >/dev/null 2>&1
+  run git fetch -q "$name" >/dev/null 2>&1
 }
 
 
@@ -78,14 +97,14 @@ merge() {
   # upside to squashing: your changes aren't drowned out by an active upstream
   # TODO: how do I suppress "Automatic merge went well; stopped..." and
   # "Squash commit -- not updating HEAD"??
-  git merge --squash -s ours --no-commit "$branch" >/dev/null 2>&1
+  run git merge --squash -s ours --no-commit "$branch" >/dev/null 2>&1
   # downside: you can't git bisect (right?) or watch upstream over time.
   # the thing to do is to commit all these changes on a branch.  That way,
   # git reset --hard HEAD^ will back out the entire merge, and you can use
   # git log --not to exclude all the upstream noise on the branch.
   # echo git merge -s ours "$branch"
 
-  git read-tree --prefix="$dest" -u "$branch"
+  run git read-tree --prefix="$dest" -u "$branch"
 }
 
 
@@ -109,10 +128,10 @@ update() {
   # no need to fetch everything.
   # TODO: how do I suppress "warning: no common commits" and
   # "From file:////tmp/tmtest.MnYyIf/upstream * [new branch]"??
-  git fetch -q "$remote" >/dev/null 2>&1
+  run git fetch -q "$remote" >/dev/null 2>&1
   # TODO: how do I suppress "Automatic merge went well; stopped..." and
   # "Squash commit -- not updating HEAD"??
-  git merge --squash -s subtree --no-commit "$branch" >/dev/null 2>&1
+  run git merge --squash -s subtree --no-commit "$branch" >/dev/null 2>&1
 }
 
 
@@ -127,7 +146,7 @@ diff() {
     return 1
   fi
 
-  git diff-tree -p --no-commit-id "$branch"
+  run git diff-tree -p --no-commit-id "$branch"
 }
 
 
