@@ -2,42 +2,27 @@
 
 # exec 2>&1; set -x
 
+. $MYDIR/utilities.sh
+
 MKDIR dir
 
-# create the upstream repository
-cd "$dir"
-mkdir upstream
-cd upstream
-git init -q
-touch upstream-1
-git add upstream-1
-git commit -q -m "create the first upstream commit"
-touch upstream-2
-git add upstream-2
-git commit -q -m "create the second upstream commit"
+# set up the test repos
+create_repo "$dir/proj"
+commit_new_file "$dir/proj" "tempfile" "add meaningless tempfile to create a first commit"
+create_repo "$dir/upstream"
+commit_new_file "$dir/upstream" "upstream-1"
+commit_new_file "$dir/upstream" "upstream-2"
 
-# create the local project
-cd "$dir"
-mkdir proj
-cd proj
-git init -q
-# create an initial commit, nothing works without it
-touch tempfile
-git add tempfile
-git commit -q -m "add meaningless tempfile to create a first commit"
-
+# add and merge the upstream subtree
+cd "$dir/proj"
 git-subtree add upstream "file:///$dir/upstream"
 git-subtree merge upstream/master updir/upstream
 git commit -q -m "add upstream subtree"
 
-# Now add another commit to upstream to be pulled
-cd "$dir/upstream"
-touch upstream-3
-git add upstream-3
-git commit -q -m "create the third upstream commit"
+# another commit appears upstream
+commit_new_file "$dir/upstream" "upstream-3"
 
-# and pull it into our project
-cd "$dir/proj"
+# so pull it into our project
 git fetch -q upstream >/dev/null 2>&1
 echo "DIFF:"
 # suppress the last "index 0000000..e69de29" line
