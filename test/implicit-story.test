@@ -2,8 +2,8 @@
 # explicitly, the script determines it implicitly from the cwd.
 
 # TODO: add a pull command, the combo of a fetch and a merge
-# TODO: get rid of update, make merge able to work on an already-merged tree
 # TODO: remember the branch we're on somehow
+# TODO: add a checkout command to switch the branch your subtree is on?
 # TODO: the difference between merge and update is pretty artificial.
 # TODO: switch to using a branch rather than a squash
 # TODO: remove the need to commit the results after merging
@@ -33,7 +33,7 @@ git commit -q -m "add upstream subtree"
 # another commit appears upstream
 commit_new_file "$dir/upstream" "upstream-3"
 
-# pull the objects into our project
+# fetch the objects into our project
 cd upstream
 git-subtree fetch
 echo "DIFF:"
@@ -41,9 +41,9 @@ echo "DIFF:"
 # TODO: need to get branch name out of here
 git-subtree diff updir/upstream/master | head -n -1
 
-# and update the subtree
+# and merge the subtree
 # TODO: need to get branch name out of here
-git-subtree update updir/upstream updir/upstream/master
+git-subtree merge updir/upstream/master updir/upstream
 git commit -q -m "update upstream subtree"
 
 echo "COMMITS:"

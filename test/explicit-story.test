@@ -22,12 +22,12 @@ git commit -q -m "add upstream subtree"
 # another commit appears upstream
 commit_new_file "$dir/upstream" "upstream-3"
 
-# so pull it into our project
+# fetch the objects into our project
 git fetch -q upstream >/dev/null 2>&1
 echo "DIFF:"
 # suppress the last "index 0000000..e69de29" line
 git-subtree diff upstream/master | head -n -1
-git-subtree update upstream upstream/master
+git-subtree merge upstream/master updir/upstream
 git commit -q -m "update upstream subtree"
 
 echo "COMMITS:"
