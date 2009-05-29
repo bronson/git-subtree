@@ -34,7 +34,8 @@
 # usage: $ DRY_RUN=1 git-subtree add http://foo
 
 cmdname="git-subtree"
-commands="add merge update diff help"
+commands="add fetch merge update diff help"
+
 
 run() {
   if [ "x$DRY_RUN" = "x" ]; then
@@ -46,6 +47,23 @@ run() {
   fi
 }
 
+# this is a crappy hack to get 'git fetch' to please be quiet.
+# there's GOT to be a better way...?
+run_quiet() {
+  if [ "x$DRY_RUN" = "x" ]; then
+    [ "x$VERBOSE" != "x" ] && echo "Running: $@" ">/dev/null 2>&1"
+    "$@" >/dev/null 2>&1
+    [ "x$VERBOSE" != "x" ] && echo " Result: $?"
+  else
+    echo "Not running: $@"
+  fi
+}
+
+guess_dir_name() {
+  # This should match guess_dir_name in builtin-clone.c
+  echo "$(basename "$1" .git)"
+}
+
 die() {
   echo "$@" >&2
   exit 1
@@ -54,29 +72,55 @@ die() {
 
 add_help=\
 "$cmdname add [<name>] <url>: adds a remote repository as a tree.
-  name: the name that will refer to this remote (git help remote)
+  name (optional): the name that will refer to this remote (see git remote)
   url: the URL of the reposiotry to fetch.
 "
 add() {
-  name="$1"
-  url="$2"
-
-  # If the user specified a single argument
-  if [ "x$url" = "x" ]; then
-    url="$name"
-    
+  if [ "x$2" != "x" ]; then
+    # user supplied an explicit remote name
+    remotename="$1"
+    remoteurl="$2"
+  else
+    # implicit remote name, need to figure it out for ourselves.
+    remoteurl="$1"
+    reponame="$(guess_dir_name "$remoteurl")"
+    curdir="$(git rev-parse --show-prefix)"
+    [ "x$curdir" = "x" ] && die "You need to be in a subdirectory."
+    remotename="$curdir$reponame"
   fi
 
-  [ "x$name" = "x" ] || [ "x$url" = "x" ] && die "usage: $cmdname add <name> <url>"
+  if [ "x$remotename" = "x" ] || [ "x$remoteurl" = "x" ]; then
+    die "usage: $cmdname add <name> <url>"
+  fi
   
-  run git remote add "$name" "$url"
-  run git config remote."$name".fetch refs/heads/\*:refs/remotes/"$name"/\*
-  run git config --add remote."$name".fetch refs/tags/\*:refs/remotes/"$name"/tags/\*
-  run git config remote."$name".tagopt --no-tags
+  run git remote add "$remotename" "$remoteurl"
+  run git config remote."$remotename".fetch refs/heads/\*:refs/remotes/"$remotename"/\*
+  run git config --add remote."$remotename".fetch refs/tags/\*:refs/remotes/"$remotename"/tags/\*
+  run git config remote."$remotename".tagopt --no-tags
 
   # TODO: how do I suppress "warning: no common commits" and
   # "From file:////tmp/tmtest.MnYyIf/upstream * [new branch]"??
-  run git fetch -q "$name" >/dev/null 2>&1
+  run_quiet git fetch -q "$remotename"
+}
+
+
+fetch_help=\
+"$cmdname fetch [<remote>]: fetches objects from the remote repo
+  remote: if unspecified, computed from the current directory.
+"
+fetch() {
+  remotename="$1"
+  if [ "x$remotename" = "x" ]; then
+    curdir="$(git rev-parse --show-prefix)"
+    [ "x$curdir" = "x" ] && die "You either need to be in a subdirectory or specify a branch name."
+    remotename=${curdir%/}
+    git remote show "$remotename" >/dev/null 2>&1
+    [ "$?" != "0" ] && die "$remotename is not a subtree.  Run git remote to show possible subtrees."
+  fi
+
+  # TODO: how do I suppress "warning: no common commits" and
+  # "From file:////tmp/tmtest.MnYyIf/upstream * [new branch]"??
+  run_quiet git fetch -q "$remotename"
 }
 
 
@@ -86,14 +130,15 @@ merge_help=\
 "
 merge() {
   branch="$1"
-  dest="$2"
-
   [ "x$branch" = "x" ] && die "usage: $cmdname merge <branch> [<destination>]"
 
-  if [ "x$dest" = "x" ]; then
-    dest=$(git rev-parse --show-prefix)
+  if [ "x$2" != "x" ]; then
+    dest="$2"
+  else
+    dest="$(git rev-parse --show-prefix)$branch"
     [ "x$dest" = "x" ] && die "you need to be in a subdirectory!"
   fi
+
 
   # TODO: why -s ours?  (it's certainly necessary!)
   # upside to squashing: your changes aren't drowned out by an active upstream
@@ -127,7 +172,7 @@ update() {
   # no need to fetch everything.
   # TODO: how do I suppress "warning: no common commits" and
   # "From file:////tmp/tmtest.MnYyIf/upstream * [new branch]"??
-  run git fetch -q "$remote" >/dev/null 2>&1
+  run_quiet git fetch -q "$remote"
   # TODO: how do I suppress "Automatic merge went well; stopped..." and
   # "Squash commit -- not updating HEAD"??
   run git merge --squash -s subtree --no-commit "$branch" >/dev/null 2>&1
@@ -140,7 +185,7 @@ diff_help=\
 diff() {
   branch="$1"
 
-  [ "x$branch" = "x" ] && die "usage: $cmdname update <branch>"
+  [ "x$branch" = "x" ] && die "usage: $cmdname diff <branch>"
 
   run git diff-tree -p --no-commit-id "$branch"
 }
@@ -186,7 +231,11 @@ for i in $commands; do
   fi
 done
 
-echo "You must supply a command to execute!"
-echo "Some commands: $commands"
+if [ "x$cmd" = "x" ]; then
+  echo "You must supply a command to execute!"
+else
+  echo "unknown command: $cmd"
+fi
+echo "  some $cmdname subcommands: $commands"
 exit 1
 
