@@ -1,0 +1,22 @@
+# Ensure we refuse to add a subtree to an empty repository
+
+. $MYDIR/utilities.sh
+
+MKDIR dir
+
+# set up the empty repo
+create_repo "$dir/repo"
+# and the upstream one to add
+create_repo "$dir/upstream"
+commit_new_file "$dir/upstream" "upstream-1"
+commit_new_file "$dir/upstream" "upstream-2"
+
+# try to add the subtree to the empty repo
+cd "$dir/repo"
+git-subtree add "file:///$dir/upstream"
+[ "$?" = "0" ] && echo "WTF, we exited normally?"
+
+rm -rf "$dir/repo" "$dir/upstream"
+
+STDERR:
+You need at least one commit before you can add a subtree.

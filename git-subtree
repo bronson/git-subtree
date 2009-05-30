@@ -6,7 +6,6 @@
 # also see http://www.kernel.org/pub/software/scm/git/docs/howto/using-merge-subtree.html
 
 # TODO: is there any way we can avoid squashing?
-# TODO: should probably check for repos with no commits; it causes us to fail
   # TODO: and branch merging instead of just squashing
   # upside to squashing: your changes aren't drowned out by an active upstream
   # downside: you can't git bisect (right?) or watch upstream over time.
@@ -86,6 +85,9 @@ add_help=\
   url: the URL of the reposiotry to fetch.
 "
 add() {
+  git rev-list --all --max-count=1 >/dev/null 2>&1
+  [ "$?" != "0" ] && die "You need at least one commit before you can add a subtree."
+
   if [ "x$2" != "x" ]; then
     # user supplied an explicit remote name
     remotename="$1"
