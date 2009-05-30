@@ -1,8 +1,8 @@
 # This test calls subtree commands but doesn't name the remote
 # explicitly, the script determines it implicitly from the cwd.
 
-# TODO: fix merge so it always accepts dest relative to the cwd
-# TODO: add a checkout command to switch the branch your subtree is on?
+# TODO: add a branch command to show the branch your subtree is on
+# TODO: add a checkout command to switch the branch your subtree is on
 # TODO: switch to using a branch rather than a squash
 # TODO: add a --no-commit option to clone, pull and merge.
 # TODO: automatically commit the results after merging

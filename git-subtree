@@ -13,6 +13,10 @@
   # git reset --hard HEAD^ will back out the entire merge, and you can use
   # git log --not to exclude all the upstream noise on the branch.
   # echo git merge -s ours "$branch"
+# TODO: crib from http://github.com/apenwarr/git-subtree/tree/master
+#       to extract patches from the subtree.
+# TODO: (far in the future) can I have two subtrees cloned from the same
+#       upstream?  How does the merge specify which subtree to affect?
 
 # Environment Variables (TODO should convert these into cmdline args):
 #   DRY_RUN=1 -- show what would happen but don't do it
@@ -91,7 +95,7 @@ clone() {
 
   add "$remoteurl" "$remotename"
   fetch "$remotename"
-  merge "$remotename/$branch" "$curdir$directory"
+  merge "$remotename/$branch" "$directory"
 }
 
 
@@ -115,7 +119,7 @@ pull() {
   [ "x$remotename" = "x" ] && remotename="${curdir%/}"
 
   fetch "$remotename"
-  merge "$remotename/$branch" "$curdir$directory"
+  merge "$remotename/$branch" "$directory"
 }
 
 
@@ -165,8 +169,6 @@ fetch() {
 }
 
 
-# TODO: merge should accept the directory name relative to the
-# cwd.  Currently it requires it relative to the repo root!
 merge_help=\
 "$cmdname merge <branch> [<directory>]
   Merges the subtree into the current repository
@@ -175,22 +177,19 @@ merge_help=\
 "
 merge() {
   branch="$1"
-  [ "x$branch" = "x" ] && die "usage: $cmdname merge <branch> [<destination>]"
+  directory="$2"
+  [ "$directory" = "." ] && directory=
 
-  if [ "x$2" != "x" ]; then
-    dest="$2"
-  else
-    dest="$(git rev-parse --show-prefix)$branch"
-    [ "x$dest" = "x" ] && die "you need to be in a subdirectory!"
-  fi
+  [ "x$branch" = "x" ] && die "usage: $cmdname merge <branch> [<directory>]"
+  absdir="$(git rev-parse --show-prefix)$directory"
 
-  if [ -e "$(git rev-parse --show-cdup)$dest" ]; then
-    # If the destination already exists, we need to merge
+  if [ "x$directory" = "x" ] || [ -e "$directory" ]; then
+    # If the destination already exists, we need to actually merge
     run_quiet git merge --squash -s subtree --no-commit "$branch"
   else
-    # otherwise, just record the result as a merge and read the tree
+    # otherwise, record a merge and read the tree
     run_quiet git merge --squash -s ours --no-commit "$branch"
-    run git read-tree --prefix="$dest" -u "$branch"
+    run git read-tree --prefix="$directory" -u "$branch"
   fi
 }
 
