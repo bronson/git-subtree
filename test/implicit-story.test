@@ -37,7 +37,7 @@ echo "COMMITS:"
 git log --pretty=tformat:%s
 echo "FILES:"
 cd "$dir/proj"
-find . -name .git -prune -o -print
+find . -name .git -prune -o -type f -print
 
 cd "$dir"
 rm -rf upstream proj
@@ -51,9 +51,7 @@ add meaningless tempfile to create a first commit
 commit_new_file: create upstream-2
 commit_new_file: create upstream-1
 FILES:
-.
 ./tempfile
-./upstream
 ./upstream/upstream-3
 ./upstream/upstream-2
 ./upstream/upstream-1
