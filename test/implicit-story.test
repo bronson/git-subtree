@@ -2,11 +2,12 @@
 # explicitly, the script determines it implicitly from the cwd.
 
 # TODO: add a pull command, the combo of a fetch and a merge
-# TODO: remember the branch we're on somehow
+# TODO: fix merge so it always accepts dest relative to the cwd
 # TODO: add a checkout command to switch the branch your subtree is on?
-# TODO: the difference between merge and update is pretty artificial.
 # TODO: switch to using a branch rather than a squash
-# TODO: remove the need to commit the results after merging
+# TODO: add a --no-commit option to clone, pull and merge.
+# TODO: automatically commit the results after merging
+# TODO: Make pull and merge remember the branch we're on somehow?
 
 # exec 2>&1; set -x
 

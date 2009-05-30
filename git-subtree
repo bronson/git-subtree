@@ -65,6 +65,37 @@ die() {
 }
 
 
+clone_help=\
+"$cmdname clone <repository> [<branch>] [<directory>] [<remote-name>]
+  Creates a new subtree checked out to the given branch of the given repo.
+  It is equivalent to $cmdname add; $cmdname fetch; $cmdname merge
+    repository: the URL of the repository to clone
+    branch:     the remote branch to check out, defaults to master
+    directory:  the directory to create, defaults to the name of the repo
+    remotename: see $cmdname add
+"
+clone() {
+  ensure_repo_has_commits
+
+  remoteurl="$1"
+  branch="$2"
+  directory="$3"
+  remotename="$4"
+
+  [ "x$remoteurl" = "x" ] && die "usage: $cmdname clone <name> <url>"
+  [ "x$branch" = "x" ] && branch="master"
+  [ "x$directory" = "x" ] && directory="$(guess_dir_name "$remoteurl")"
+  if [ "x$remotename" = "x" ]; then
+    curdir="$(git rev-parse --show-prefix)"
+    remotename="$curdir$directory"
+  fi
+
+  add "$remoteurl" "$remotename"
+  fetch "$remotename"
+  merge "$remotename/$branch" "$(git rev-parse --show-prefix)$directory"
+}
+
+
 add_help=\
 "$cmdname add <repository> [<remote-name>]
   Adds knowledge of the given subtree to the repo but doesn't check anything
@@ -92,40 +123,10 @@ add() {
 }
 
 
-clone_help=\
-"$cmdname clone <repository> [<branch>] [<directory>] [<remote-name>]
-  Creates a new subtree checked out to the given branch of the given repo.
-  It is equivalent to $cmdname add; $cmdname fetch; $cmdname merge
-    repository: the URL of the repository to clone
-    branch:     the remote branch to check out, defaults to master
-    directory:  name of the dir to create, defaults to the name of the repo
-    remotename: see $cmdname add
-"
-clone() {
-  ensure_repo_has_commits
-
-  remoteurl="$1"
-  branch="$2"
-  directory="$3"
-  remotename="$4"
-
-  [ "x$remoteurl" = "x" ] && die "usage: $cmdname clone <name> <url>"
-  [ "x$branch" = "x" ] && branch="master"
-  [ "x$directory" = "x" ] && directory="$(guess_dir_name "$remoteurl")"
-  if [ "x$remotename" = "x" ]; then
-    curdir="$(git rev-parse --show-prefix)"
-    remotename="$curdir$directory"
-  fi
-
-  add "$remoteurl" "$remotename"
-  fetch "$remotename"
-  merge "$remotename/$branch" "$(git rev-parse --show-prefix)$directory"
-}
-
-
 fetch_help=\
 "$cmdname fetch [<remote>]: fetches objects from the remote repo
-  remote: if unspecified, computed from the current directory.
+  remote: The name of the remote to fetch from (see git remote).
+          Defaults to the current directory relative to git's root.
 "
 fetch() {
   remotename="$1"
@@ -144,8 +145,10 @@ fetch() {
 # TODO: merge should accept the directory name relative to the
 # cwd.  Currently it requires it relative to the repo root!
 merge_help=\
-"$cmdname merge [remote]
-  Merges the branch into the current directory of the repository
+"$cmdname merge <branch> [<directory>]
+  Merges the subtree into the current repository
+    branch:    the branch of the remote project to merge
+    directory: where to store the subtree (defaults to the current directory)
 "
 merge() {
   branch="$1"
