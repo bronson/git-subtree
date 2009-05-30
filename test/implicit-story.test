@@ -1,7 +1,6 @@
 # This test calls subtree commands but doesn't name the remote
 # explicitly, the script determines it implicitly from the cwd.
 
-# TODO: adjust this test to work in the root dir (get rid of updir)
 # TODO: add a pull command, the combo of a fetch and a merge
 # TODO: remember the branch we're on somehow
 # TODO: add a checkout command to switch the branch your subtree is on?
@@ -24,8 +23,6 @@ commit_new_file "$dir/upstream" "upstream-2"
 
 # Add the subtree
 cd "$dir/proj"
-mkdir updir
-cd updir
 git-subtree clone "file://$dir/upstream"
 # TODO: this commit needs to disappear
 git commit -q -m "add upstream subtree"
@@ -39,18 +36,18 @@ git-subtree fetch
 echo "DIFF:"
 # head -n -1 is to suppress the final "index 0000000..e69de29" line
 # TODO: need to get branch name out of here
-git-subtree diff updir/upstream/master | head -n -1
+git-subtree diff upstream/master | head -n -1
 
 # and merge the subtree
 # TODO: need to get branch name out of here
-git-subtree merge updir/upstream/master updir/upstream
+git-subtree merge upstream/master upstream
 git commit -q -m "update upstream subtree"
 
 echo "COMMITS:"
 git log --pretty=tformat:%s
 echo "FILES:"
 cd "$dir/proj"
-find updir
+find . -name .git -prune -o -print
 
 cd "$dir"
 rm -rf upstream proj
@@ -64,8 +61,9 @@ update upstream subtree
 add upstream subtree
 add meaningless tempfile to create a first commit
 FILES:
-updir
-updir/upstream
-updir/upstream/upstream-3
-updir/upstream/upstream-2
-updir/upstream/upstream-1
+.
+./tempfile
+./upstream
+./upstream/upstream-3
+./upstream/upstream-2
+./upstream/upstream-1
