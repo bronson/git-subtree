@@ -48,7 +48,8 @@ DIFF:
 diff --git a/upstream-3 b/upstream-3
 new file mode 100644
 BRANCH: 
-upremote/upbranch
+  master
+* upbranch
 COMMITS (unordered):
 add meaningless tempfile to create a first commit
 add upstream subtree

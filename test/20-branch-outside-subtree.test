@@ -52,4 +52,4 @@ could not find nondir in known subtrees.
 could not find nonbranchdir in known subtrees.
 could not find nonbranchdir/subdir in known subtrees.
 STDOUT:
-upstream/master
+* master

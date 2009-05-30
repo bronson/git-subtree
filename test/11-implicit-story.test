@@ -48,7 +48,7 @@ rm -rf upstream proj
 
 STDOUT:
 BRANCH: 
-upstream/master
+* master
 COMMITS (unordered):
 add meaningless tempfile to create a first commit
 add upstream subtree

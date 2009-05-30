@@ -92,14 +92,15 @@ double_quote_parse() {
 # git doesn't offer a way to split a remote tracking branch into the name
 # of the remote and the name of the branch.  so, I'll iterate over all the
 # remotes looking for the longest match.
-find_remote_from_tracking_branch() {
+# NOTE: sets 2 globals: remote and branch
+split_tracking_branch() {
   tracking="$1"
 
-  for ttr in "$(git remote)"; do
-    ttb="${tracking#"$ttr/"}"
+  for line in "$(git remote)"; do
+    ttb="${tracking#"$line/"}"
     if [ "$ttb" != "$tracking" ]; then
       if [ $((${#tracking} - ${#ttb})) -gt ${#remote} ]; then
-        remote="$ttr"
+        remote="$line"
         branch="$ttb"
       fi
     fi
@@ -119,7 +120,7 @@ store_remote_tracking_branch() {
   tracking="$1"
   directory="${2%/}"
 
-  find_remote_from_tracking_branch "$tracking"
+  split_tracking_branch "$tracking"
   [ "$?" != "0" ] && die "Can't save remote tracking branch."
 
   escdir="$(double_quote_escape "$directory")"
@@ -144,7 +145,7 @@ find_prefix_in_branchfile() {
   branchfile="$(git rev-parse --show-cdup).git-subtrees"
   [ ! -f "$branchfile" ] && die "this repo doesn't have any subtrees."
 
-  while read line; do
+  while read -r line; do
     if [ "${line#"$prefix "}" != "$line" ]; then
       echo "$line"
       return 0
@@ -158,22 +159,22 @@ find_remote_tracking_branch() {
   directory="${1%/}"
 
   escdir="$(double_quote_escape "$directory")"
-  line="$(find_prefix_in_branchfile "$escdir")"
-  [ -z "$line" ] && die   # message is already printed
+  branchline="$(find_prefix_in_branchfile "$escdir")"
+  [ -z "$branchline" ] && die   # message is already printed
 
   # read each line of double_quote_parse into a variable
   # use a heredoc to ensure the read doesn't occur in a subshell
   bdir= btrack=
   while read -r line; do
-    if [ -z "$bdir" ]; then bdir="$line";
-    elif [ -z "$btrack"]; then btrack="$line";
+    if [ -z "$bdir" ]; then bdir="$line"
+    elif [ -z "$btrack"]; then btrack="$line"
     fi
   done <<EOL
-$(double_quote_parse "$line")
+$(double_quote_parse "$branchline")
 EOL
 
-  [ -z "$bdir" ] && die "could not find bdir in <<$line>> for <<$escdir>>"
-  [ -z "$btrack" ] && die "could not find btrack in <<$line>> for <<$escdir>>"
+  [ -z "$bdir" ] && die "could not find bdir in <<$branchline>> for <<$escdir>>"
+  [ -z "$btrack" ] && die "could not find btrack in <<$branchline>> for <<$escdir>>"
 
   echo "$btrack"
 }
@@ -271,10 +272,24 @@ branch() {
   [ "$directory" = "." ] && directory=
 
   absdir="$(git rev-parse --show-prefix)$directory"
-  branch="$(find_remote_tracking_branch "$absdir")"
-  [ -z "$branch" ] && die  # message is already printed
+  tracking_branch="$(find_remote_tracking_branch "$absdir")"
+  [ -z "$tracking_branch" ] && die  # message is already printed
+ 
+  split_tracking_branch "$tracking_branch"
+  # now "remote" and "branch" are the components of tracking_branch
 
-  echo "$branch"
+  # show all branches for this remote with a star next to the
+  # most-recently-merged branch.
+  git branch -r | sed -e 's/^\s*//' | while read -r line; do
+    b="${line#"$remote/"}"
+    if [ "$b" != "$line" ]; then
+      if [ "$b" = "$branch" ]; then
+        echo "* $b"
+      else
+        echo "  $b"
+      fi
+    fi
+  done
 }
 
 
