@@ -2,8 +2,6 @@
 
 # exec 2>&1; set -x
 
-# TODO: check out a different branch than master
-
 . $MYDIR/utilities.sh
 
 MKDIR dir
@@ -13,11 +11,13 @@ create_repo "$dir/proj"
 commit_new_file "$dir/proj" "tempfile" "add meaningless tempfile to create a first commit"
 create_repo "$dir/upstream"
 commit_new_file "$dir/upstream" "upstream-1"
+cd "$dir/upstream"
+git checkout -q -b upbranch
 commit_new_file "$dir/upstream" "upstream-2"
 
 # add and merge the upstream subtree
 cd "$dir/proj"
-git-subtree clone "file://$dir/upstream" master updir/upstream upremote
+git-subtree clone "file://$dir/upstream" upbranch updir/upstream upremote
 git commit -q -m "add upstream subtree"
 
 # another commit appears upstream
@@ -27,8 +27,8 @@ commit_new_file "$dir/upstream" "upstream-3"
 git fetch -q upremote >/dev/null 2>&1
 echo "DIFF:"
 # suppress the last "index 0000000..e69de29" line
-git-subtree diff upremote/master | head -n -1
-git-subtree merge upremote/master updir/upstream
+git-subtree diff upremote/upbranch | head -n -1
+git-subtree merge upremote/upbranch updir/upstream
 git commit -q -m "update upstream subtree"
 
 echo "COMMITS:"
