@@ -28,7 +28,6 @@ cd upstream
 echo "initial branch:"
 git-subtree branch
 
-# TODO: these upstream/ should not need to be here!
 echo "switch /1"
 git-subtree merge upstream/branches/1
 git-subtree branch

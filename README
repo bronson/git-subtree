@@ -1,0 +1,44 @@
+
+                             git-subtree
+
+
+
+Tries to present an easy-to-use interface for git's subtree merge strategy.
+It's meant to work like git submodules but without the suckage.
+
+
+SYNOPSIS:
+
+  cd vendor/plugins
+  git-subtree clone git://github.com/mislav/will_paginate.git
+  git commit     (note: this step will probably go away)
+
+Now you have a vendor/plugins/will_paginate directory, complete with
+full history.
+
+When changes appear upstream, you can pull them into your subtree
+
+  cd vendor/plugins/will_paginate
+  git-subtree pull
+
+(pull is, of course, a combination of git-subtree fetch and git-subtree merge)
+
+Help works.  Run 'git-subtree help' to see what commands you have at
+your disposal, or 'git-subtree help merge' for help on a specific command.
+
+
+INSTALL:
+
+Just copy git-subtree somewhere on your path.
+
+
+FAQ:
+
+Why isn't there a 'git-subtree checkout' command?
+
+  You can only merge to subtrees.  It doesn't make sense to check them out.
+  A subtree is really no different from a git branch -- you can't really
+  go backward (well, you can merge revert commits, ugh).  So, if you ever
+  want to checkout a whole new subtree, rather than merging, you should
+  probably just delete it then clone it at the desired commit.
+

@@ -317,6 +317,9 @@ merge_help=\
   Merges the subtree into the current repository
     branch:    the remote tracking branch to merge, i.e. remote/master
     directory: where to store the subtree (defaults to the current directory)
+
+  Merging won't take you backward in time.  If you want to remove commits
+  from a subtree, it might be easiest just to delete it and re-clone it.
 "
 merge() {
   branch="$1"

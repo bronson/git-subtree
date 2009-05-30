@@ -1,7 +1,7 @@
 # This test calls subtree commands but doesn't name the remote
 # explicitly, the script determines it implicitly from the cwd.
 
-# TODO: add a checkout command to switch the branch your subtree is on
+# TODO: make merge accept a plain branch name as well as a full RTB.
 # TODO: make merge look up previous branch if not supplied
 # TODO: automatically commit the results after merging
 # TODO: add a --no-commit option to clone, pull and merge.
