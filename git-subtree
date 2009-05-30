@@ -14,32 +14,13 @@
   # git log --not to exclude all the upstream noise on the branch.
   # echo git merge -s ours "$branch"
 
-# desired usage:
-#
-# setup:
-#   mkdir -p vendor/plugins/will-paginate
-#   cd vendor/plugins/will-paginate
-#   git-subtree add git://github.com/mislav/will_paginate.git
-#   git-subtree merge master
-#   git-subtree merge vendor/plugins/will_paginate/tags/v2.3.8
-#      ("git-subtree branch" will list the branches you can use)
-#
-# update:
-#   git-subtree update vendor/plugins/will-paginate [branch]
-#   cd vendor/plugins/will-paginate
-#   git-subtree update [branch]
-# 
-#   git-subtree diff vendor/plugins/will-paginate
-#   cd vendor/plugins/will-paginate
-#   git-subtree diff
-#
-# Environment Variables (should probably convert into cmdline args):
+# Environment Variables (TODO should convert these into cmdline args):
 #   DRY_RUN=1 -- show what would happen but don't do it
 #   VERBOSE=1 -- display the git commands as we run them
 # usage: $ DRY_RUN=1 git-subtree add http://foo
 
 cmdname="git-subtree"
-commands="clone fetch merge diff help"
+commands="help clone fetch merge diff add"
 
 
 run() {
@@ -73,25 +54,57 @@ guess_dir_name() {
   echo "$(basename "$1" .git)"
 }
 
+ensure_repo_has_commits() {
+  git rev-list --all --max-count=1 >/dev/null 2>&1
+  [ "$?" != "0" ] && die "You need at least one commit before you can add a subtree."
+}
+
 die() {
   echo "$@" >&2
   exit 1
 }
 
 
+add_help=\
+"$cmdname add <repository> [<remote-name>]
+  Adds knowledge of the given subtree to the repo but doesn't check anything
+  out.  See $cmdname clone for the easy way to create a subtree.
+    repository: the URL of the repository to clone
+    remotename: the name to assign to this remote (see git remote)
+"
+add() {
+  ensure_repo_has_commits
+
+  remoteurl="${1%/}"
+  remotename="$2"
+
+  [ "x$remoteurl" = "x" ] && die "usage: $cmdname add <name> <url>"
+  if [ "x$remotename" = "x" ]; then
+    curdir="$(git rev-parse --show-prefix)"
+    directory="$(guess_dir_name "$remoteurl")"
+    remotename="$curdir$directory"
+  fi
+
+  run git remote add "$remotename" "$remoteurl"
+  run git config remote."$remotename".fetch refs/heads/\*:refs/remotes/"$remotename"/\*
+  run git config --add remote."$remotename".fetch refs/tags/\*:refs/remotes/"$remotename"/tags/\*
+  run git config remote."$remotename".tagopt --no-tags
+}
+
+
 clone_help=\
 "$cmdname clone <repository> [<branch>] [<directory>] [<remote-name>]
   Creates a new subtree checked out to the given branch of the given repo.
-  - url: the URL of the repository to clone
-  - branch: the remote branch to check out, defaults to master
-  - directory: name of the dir to create, defaults to the name of the repo
-  - remotename: the name to assign to this remote (see git remote)
+  It is equivalent to $cmdname add; $cmdname fetch; $cmdname merge
+    repository: the URL of the repository to clone
+    branch:     the remote branch to check out, defaults to master
+    directory:  name of the dir to create, defaults to the name of the repo
+    remotename: see $cmdname add
 "
 clone() {
-  git rev-list --all --max-count=1 >/dev/null 2>&1
-  [ "$?" != "0" ] && die "You need at least one commit before you can clone a subtree."
+  ensure_repo_has_commits
 
-  remoteurl="${1%/}"
+  remoteurl="$1"
   branch="$2"
   directory="$3"
   remotename="$4"
@@ -104,11 +117,7 @@ clone() {
     remotename="$curdir$directory"
   fi
 
-  run git remote add "$remotename" "$remoteurl"
-  run git config remote."$remotename".fetch refs/heads/\*:refs/remotes/"$remotename"/\*
-  run git config --add remote."$remotename".fetch refs/tags/\*:refs/remotes/"$remotename"/tags/\*
-  run git config remote."$remotename".tagopt --no-tags
-
+  add "$remoteurl" "$remotename"
   fetch "$remotename"
   merge "$remotename/$branch" "$(git rev-parse --show-prefix)$directory"
 }
@@ -178,22 +187,20 @@ help_help="Shows help text for the given command"
 
 help() {
   if [ "x$1" = "x" ]; then
+# TODO: once the commands settle down, put an example usage into this help text
     echo \
-"$cmdname, like git submodule, allows you to place another git project
-into a subtree of your current project.  Unlike git submodule, however,
-you can still branch and merge when it's in your repo.
-
-   $cmdname add will_paginate git://github.com/mislav/will_paginate.git
-   $cmdname merge will_paginate/master vendor/plugins/will_paginate
-   git commit   # todo: should commit automatically
+"$cmdname places another git repository into a subtree of your current
+project.  It's like git submodule except that you can still branch and
+merge when it's in your repo.
 "
     return 0
   fi
 
   for i in $commands; do
     if [ "$i" = "$1" ]; then
-      # echo $add_help if user typed 'gitree help add'
+      echo
       echo "$(eval "echo \"\$${i}_help\"")"
+      echo
       return 0
     fi
   done

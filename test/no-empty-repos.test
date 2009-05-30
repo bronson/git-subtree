@@ -12,11 +12,14 @@ commit_new_file "$dir/upstream" "upstream-1"
 commit_new_file "$dir/upstream" "upstream-2"
 
 # try to add the subtree to the empty repo
+# need to check every method that adds a subtree
 cd "$dir/repo"
 git-subtree clone "file:///$dir/upstream"
+git-subtree add "file:///$dir/upstream"
 [ "$?" = "0" ] && echo "WTF, we exited normally?"
 
 rm -rf "$dir/repo" "$dir/upstream"
 
 STDERR:
-You need at least one commit before you can clone a subtree.
+You need at least one commit before you can add a subtree.
+You need at least one commit before you can add a subtree.
