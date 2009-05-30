@@ -20,7 +20,7 @@
 # usage: $ DRY_RUN=1 git-subtree add http://foo
 
 cmdname="git-subtree"
-commands="help clone fetch merge diff add"
+commands="help clone pull fetch merge diff add"
 
 
 run() {
@@ -82,17 +82,40 @@ clone() {
   directory="$3"
   remotename="$4"
 
+  curdir="$(git rev-parse --show-prefix)"
+
   [ "x$remoteurl" = "x" ] && die "usage: $cmdname clone <name> <url>"
   [ "x$branch" = "x" ] && branch="master"
   [ "x$directory" = "x" ] && directory="$(guess_dir_name "$remoteurl")"
-  if [ "x$remotename" = "x" ]; then
-    curdir="$(git rev-parse --show-prefix)"
-    remotename="$curdir$directory"
-  fi
+  [ "x$remotename" = "x" ] && remotename="$curdir$directory"
 
   add "$remoteurl" "$remotename"
   fetch "$remotename"
-  merge "$remotename/$branch" "$(git rev-parse --show-prefix)$directory"
+  merge "$remotename/$branch" "$curdir$directory"
+}
+
+
+pull_help=\
+"$cmdname pull [<branch>] [<directory>] [<remote-name>]
+  Pulls down the most recent commits to the remote repository and commits
+  them to the subtree.  Equivalent to $cmdname fetch; $cmdname merge
+    branch:     the remote branch to check out, defaults to master
+    directory:  the directory to create, defaults to the name of the repo
+    remotename: see $cmdname add
+"
+pull() {
+  branch="$1"
+  directory="$2"
+  remotename="$3"
+
+  curdir="$(git rev-parse --show-prefix)"
+
+  [ "x$branch" = "x" ] && branch="master"
+  [ "x$directory" = "x" ] && directory="."
+  [ "x$remotename" = "x" ] && remotename="${curdir%/}"
+
+  fetch "$remotename"
+  merge "$remotename/$branch" "$curdir$directory"
 }
 
 

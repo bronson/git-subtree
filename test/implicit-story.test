@@ -1,7 +1,6 @@
 # This test calls subtree commands but doesn't name the remote
 # explicitly, the script determines it implicitly from the cwd.
 
-# TODO: add a pull command, the combo of a fetch and a merge
 # TODO: fix merge so it always accepts dest relative to the cwd
 # TODO: add a checkout command to switch the branch your subtree is on?
 # TODO: switch to using a branch rather than a squash
@@ -31,17 +30,8 @@ git commit -q -m "add upstream subtree"
 # another commit appears upstream
 commit_new_file "$dir/upstream" "upstream-3"
 
-# fetch the objects into our project
 cd upstream
-git-subtree fetch
-echo "DIFF:"
-# head -n -1 is to suppress the final "index 0000000..e69de29" line
-# TODO: need to get branch name out of here
-git-subtree diff upstream/master | head -n -1
-
-# and merge the subtree
-# TODO: need to get branch name out of here
-git-subtree merge upstream/master upstream
+git-subtree pull master
 git commit -q -m "update upstream subtree"
 
 echo "COMMITS:"
@@ -54,9 +44,6 @@ cd "$dir"
 rm -rf upstream proj
 
 STDOUT:
-DIFF:
-diff --git a/upstream-3 b/upstream-3
-new file mode 100644
 COMMITS:
 update upstream subtree
 add upstream subtree
