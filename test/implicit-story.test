@@ -3,7 +3,6 @@
 
 # TODO: add a branch command to show the branch your subtree is on
 # TODO: add a checkout command to switch the branch your subtree is on
-# TODO: switch to using a branch rather than a squash
 # TODO: add a --no-commit option to clone, pull and merge.
 # TODO: automatically commit the results after merging
 # TODO: Make pull and merge remember the branch we're on somehow?
@@ -47,7 +46,10 @@ STDOUT:
 COMMITS:
 update upstream subtree
 add upstream subtree
+commit_new_file: create upstream-3
 add meaningless tempfile to create a first commit
+commit_new_file: create upstream-2
+commit_new_file: create upstream-1
 FILES:
 .
 ./tempfile

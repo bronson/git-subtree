@@ -5,14 +5,6 @@
 # based on http://dysinger.net/2008/04/29/replacing-braid-or-piston-for-git-with-40-lines-of-rake/
 # also see http://www.kernel.org/pub/software/scm/git/docs/howto/using-merge-subtree.html
 
-# TODO: is there any way we can avoid squashing?
-  # TODO: and branch merging instead of just squashing
-  # upside to squashing: your changes aren't drowned out by an active upstream
-  # downside: you can't git bisect (right?) or watch upstream over time.
-  # the thing to do is to commit all these changes on a branch.  That way,
-  # git reset --hard HEAD^ will back out the entire merge, and you can use
-  # git log --not to exclude all the upstream noise on the branch.
-  # echo git merge -s ours "$branch"
 # TODO: crib from http://github.com/apenwarr/git-subtree/tree/master
 #       to extract patches from the subtree.
 # TODO: (far in the future) can I have two subtrees cloned from the same
@@ -185,10 +177,10 @@ merge() {
 
   if [ "x$directory" = "x" ] || [ -e "$directory" ]; then
     # If the destination already exists, we need to actually merge
-    run_quiet git merge --squash -s subtree --no-commit "$branch"
+    run_quiet git merge -s subtree --no-commit "$branch"
   else
     # otherwise, record a merge and read the tree
-    run_quiet git merge --squash -s ours --no-commit "$branch"
+    run_quiet git merge -s ours --no-commit "$branch"
     run git read-tree --prefix="$directory" -u "$branch"
   fi
 }
