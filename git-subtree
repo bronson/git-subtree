@@ -39,7 +39,7 @@
 # usage: $ DRY_RUN=1 git-subtree add http://foo
 
 cmdname="git-subtree"
-commands="add fetch merge diff help"
+commands="clone fetch merge diff help"
 
 
 run() {
@@ -79,38 +79,38 @@ die() {
 }
 
 
-add_help=\
-"$cmdname add [<name>] <url>: adds a remote repository as a tree.
-  name (optional): the name that will refer to this remote (see git remote)
-  url: the URL of the reposiotry to fetch.
+clone_help=\
+"$cmdname clone <repository> [<branch>] [<directory>] [<remote-name>]
+  Creates a new subtree checked out to the given branch of the given repo.
+  - url: the URL of the repository to clone
+  - branch: the remote branch to check out, defaults to master
+  - directory: name of the dir to create, defaults to the name of the repo
+  - remotename: the name to assign to this remote (see git remote)
 "
-add() {
+clone() {
   git rev-list --all --max-count=1 >/dev/null 2>&1
-  [ "$?" != "0" ] && die "You need at least one commit before you can add a subtree."
+  [ "$?" != "0" ] && die "You need at least one commit before you can clone a subtree."
 
-  if [ "x$2" != "x" ]; then
-    # user supplied an explicit remote name
-    remotename="$1"
-    remoteurl="$2"
-  else
-    # implicit remote name, need to figure it out for ourselves.
-    remoteurl="$1"
-    reponame="$(guess_dir_name "$remoteurl")"
+  remoteurl="$1"
+  branch="$2"
+  directory="$3"
+  remotename="$4"
+
+  [ "x$remoteurl" = "x" ] && die "usage: $cmdname clone <name> <url>"
+  [ "x$branch" = "x" ] && branch="master"
+  [ "x$directory" = "x" ] && directory="$(guess_dir_name "$remoteurl")"
+  if [ "x$remotename" = "x" ]; then
     curdir="$(git rev-parse --show-prefix)"
-    [ "x$curdir" = "x" ] && die "You need to be in a subdirectory."
-    remotename="$curdir$reponame"
+    remotename="$curdir$directory"
   fi
 
-  if [ "x$remotename" = "x" ] || [ "x$remoteurl" = "x" ]; then
-    die "usage: $cmdname add <name> <url>"
-  fi
-  
   run git remote add "$remotename" "$remoteurl"
   run git config remote."$remotename".fetch refs/heads/\*:refs/remotes/"$remotename"/\*
   run git config --add remote."$remotename".fetch refs/tags/\*:refs/remotes/"$remotename"/tags/\*
   run git config remote."$remotename".tagopt --no-tags
 
-  run_quiet git fetch -q "$remotename"
+  fetch "$remotename"
+  merge "$remotename/$branch" "$(git rev-parse --show-prefix)$directory"
 }
 
 
@@ -132,6 +132,8 @@ fetch() {
 }
 
 
+# TODO: merge should accept the directory name relative to the
+# cwd.  Currently it requires it relative to the repo root!
 merge_help=\
 "$cmdname merge [remote]
   Merges the branch into the current directory of the repository
