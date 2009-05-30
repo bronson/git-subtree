@@ -1,0 +1,55 @@
+# Ensure that we print something sensible if the user calls subtree branch
+# outside of a subtree.
+
+. $MYDIR/utilities.sh
+
+MKDIR dir
+
+# set up the empty repo
+create_repo "$dir/repo"
+cd "$dir/repo"
+commit_new_file "$dir/repo" "tempfile"
+create_repo "$dir/upstream"
+commit_new_file "$dir/upstream" "upstream-1"
+commit_new_file "$dir/upstream" "upstream-2"
+
+# try to add the subtree to the empty repo
+# need to check every method that adds a subtree
+cd "$dir/repo"
+
+mkdir nonbranchdir
+git-subtree branch nonbranchdir
+[ "$?" = "0" ] && echo "WTF, it exited normally?"
+
+git-subtree clone "file://$dir/upstream"
+
+git-subtree branch
+[ "$?" = "0" ] && echo "WTF, it exited normally?"
+
+git-subtree branch nondir
+[ "$?" = "0" ] && echo "WTF, it exited normally?"
+
+git-subtree branch nonbranchdir
+[ "$?" = "0" ] && echo "WTF, it exited normally?"
+
+cd nonbranchdir
+mkdir subdir
+cd subdir
+git-subtree branch
+[ "$?" = "0" ] && echo "WTF, it exited normally?"
+
+# and, just to sanity check, this should succeed
+# and print "upstream/master" on stdout.
+cd "$dir/repo/upstream"
+git-subtree branch
+
+rm -rf "$dir/repo" "$dir/upstream"
+
+STDERR:
+this repo doesn't have any subtrees.
+please specify a subtree.
+could not find nondir in known subtrees.
+could not find nonbranchdir in known subtrees.
+could not find nonbranchdir/subdir in known subtrees.
+STDOUT:
+upstream/master

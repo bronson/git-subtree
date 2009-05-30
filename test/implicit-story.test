@@ -1,11 +1,10 @@
 # This test calls subtree commands but doesn't name the remote
 # explicitly, the script determines it implicitly from the cwd.
 
-# TODO: add a branch command to show the branch your subtree is on
 # TODO: add a checkout command to switch the branch your subtree is on
-# TODO: add a --no-commit option to clone, pull and merge.
+# TODO: make merge look up previous branch if not supplied
 # TODO: automatically commit the results after merging
-# TODO: Make pull and merge remember the branch we're on somehow?
+# TODO: add a --no-commit option to clone, pull and merge.
 
 # exec 2>&1; set -x
 
@@ -22,6 +21,7 @@ commit_new_file "$dir/upstream" "upstream-2"
 
 # Add the subtree
 cd "$dir/proj"
+
 git-subtree clone "file://$dir/upstream"
 # TODO: this commit needs to disappear
 git commit -q -m "add upstream subtree"
@@ -29,10 +29,12 @@ git commit -q -m "add upstream subtree"
 # another commit appears upstream
 commit_new_file "$dir/upstream" "upstream-3"
 
-cd upstream
+cd "$dir/proj/upstream"
 git-subtree pull master
 git commit -q -m "update upstream subtree"
 
+echo "BRANCH: "
+git-subtree branch 2>&1
 echo "COMMITS (unordered):"
 git log --pretty=tformat:%s | sort
 echo "FILES:"
@@ -45,6 +47,8 @@ cd "$dir"
 rm -rf upstream proj
 
 STDOUT:
+BRANCH: 
+upstream/master
 COMMITS (unordered):
 add meaningless tempfile to create a first commit
 add upstream subtree

@@ -31,6 +31,8 @@ git-subtree diff upremote/upbranch | head -n -1
 git-subtree merge upremote/upbranch updir/upstream
 git commit -q -m "update upstream subtree"
 
+echo "BRANCH: "
+git-subtree branch updir/upstream 2>&1
 echo "COMMITS (unordered):"
 git log --pretty=tformat:%s | sort
 echo "FILES:"
@@ -45,6 +47,8 @@ STDOUT:
 DIFF:
 diff --git a/upstream-3 b/upstream-3
 new file mode 100644
+BRANCH: 
+upremote/upbranch
 COMMITS (unordered):
 add meaningless tempfile to create a first commit
 add upstream subtree
