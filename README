@@ -42,3 +42,15 @@ Why isn't there a 'git-subtree checkout' command?
   want to checkout a whole new subtree, rather than merging, you should
   probably just delete it then clone it at the desired commit.
 
+How do I move a subtree to a differet directory or delete it?
+
+  The usual git commands: git mv and git rm.  That should be all you need.
+
+  There is a minor catch.  git-subtree stores the branch that you most
+  recently merged into each subtree in the .git-subtrees file.
+  If you move a subtree, this file will be out of date.  No problem,
+  git subtree will ask you to explicitly name a branch the next time
+  you merge into the subtree in the new location.
+
+  TODO: is there a way to clean this up?
+
