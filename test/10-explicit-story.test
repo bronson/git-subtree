@@ -31,6 +31,9 @@ git-subtree diff upremote/upbranch | head -n -1
 git-subtree merge upremote/upbranch updir/upstream
 git commit -q -m "update upstream subtree"
 
+# make sure all files are checked in
+git ls-files -o -m
+
 echo "BRANCH: "
 git-subtree branch updir/upstream 2>&1
 echo "COMMITS (unordered):"

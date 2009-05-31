@@ -5,6 +5,7 @@
 # TODO: make merge look up previous branch if not supplied
 # TODO: automatically commit the results after merging
 # TODO: add a --no-commit option to clone, pull and merge.
+# TODO: ensure that merging to a tag and maybe a specific sha1 work too.
 
 # exec 2>&1; set -x
 
@@ -33,8 +34,12 @@ cd "$dir/proj/upstream"
 git-subtree pull master
 git commit -q -m "update upstream subtree"
 
+# make sure all files are checked in
+cd "$dir/proj"
+git ls-files -o -m
+
 echo "BRANCH: "
-git-subtree branch 2>&1
+git-subtree branch upstream 2>&1
 echo "COMMITS (unordered):"
 git log --pretty=tformat:%s | sort
 echo "FILES:"
