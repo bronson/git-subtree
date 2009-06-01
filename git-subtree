@@ -92,7 +92,7 @@ double_quote_parse() {
 # git doesn't offer a way to split a remote tracking branch into the name
 # of the remote and the name of the branch.  so, I'll iterate over all the
 # remotes looking for the longest match.
-# NOTE: sets 2 globals: remote and branch
+# NOTE: returns results in two globals: remote and branch
 split_tracking_branch() {
   tracking="$1"
 
@@ -220,7 +220,7 @@ pull_help=\
   Pulls down the most recent commits to the remote repository and commits
   them to the subtree.  Equivalent to $cmdname fetch; $cmdname merge
     branch:     the remote branch to check out, defaults to master
-    directory:  the directory to create, defaults to the name of the repo
+    directory:  directory to receive the result, defaults to the current dir
     remotename: see $cmdname add
 "
 pull() {
