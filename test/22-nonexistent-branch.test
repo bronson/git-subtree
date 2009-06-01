@@ -1,0 +1,47 @@
+# Ensure we do the right thing if we try to pull or merge a
+# nonexistent branch.
+
+. $MYDIR/utilities.sh
+
+MKDIR dir
+
+# set up the test repos
+create_repo "$dir/proj"
+commit_new_file "$dir/proj" "tempfile" "add meaningless tempfile to create a first commit"
+create_repo "$dir/upstream"
+commit_new_file "$dir/upstream" "upstream-1"
+cd "$dir/upstream"
+
+git checkout -q -b branch
+
+
+# Add the subtree
+cd "$dir/proj"
+git-subtree clone "file://$dir/upstream" branch
+git commit -q -m "add upstream subtree"
+
+cd upstream
+echo "initial branch:"
+git-subtree branch
+
+echo "merge upstream/feh"
+git-subtree merge "upstream/feh"
+git-subtree branch
+
+# TODO: enable this when merge supports it
+#echo "merge feh"
+#git-subtree merge "feh"
+#git-subtree branch
+
+cd "$dir"
+rm -rf upstream proj
+
+STDOUT:
+initial branch:
+* branch
+  master
+merge upstream/feh
+* branch
+  master
+STDERR:
+Branch upstream/feh does not exist!

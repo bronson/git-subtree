@@ -12,6 +12,7 @@
 # TODO: (far in the future) can I have two subtrees cloned from the same
 #       upstream?  How does the merge specify which subtree to affect?
 # TODO: can I clone another subtree into an already cloned subtree?
+# TODO: ensure that git bisect works
 
 # Environment Variables (TODO should convert these into cmdline args):
 #   DRY_RUN=1 -- show what would happen but don't do it
@@ -184,6 +185,20 @@ EOL
   echo "$btrack"
 }
 
+# Ensures the given name is a valid branch name, otherwise we die.
+check_branch_name() {
+  branch="$1"
+  
+  # read from heredoc so command won't occur in a subshell
+  while read -r line ; do
+    [ "$line" = "$branch" ] && return
+  done <<EOL
+$(git branch -r | sed -e 's/^\s*//')
+EOL
+
+  die "Branch $branch does not exist!"
+}
+
 
 clone_help=\
 "$cmdname clone <repository> [<branch>] [<directory>] [<remote-name>]
@@ -333,6 +348,8 @@ merge() {
 
   [ "x$branch" = "x" ] && die "usage: $cmdname merge <branch> [<directory>]"
   absdir="$(git rev-parse --show-prefix)$directory"
+
+  check_branch_name "$branch"
 
   if [ "x$directory" = "x" ] || [ -e "$directory" ]; then
     # If the destination already exists, we need to actually merge
