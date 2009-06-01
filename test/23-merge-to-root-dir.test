@@ -1,0 +1,38 @@
+# Ensure we do the right thing if we try to pull or merge a
+# nonexistent branch.
+
+. $MYDIR/utilities.sh
+
+MKDIR dir
+
+# set up the test repos
+create_repo "$dir/proj"
+commit_new_file "$dir/proj" "tempfile" "add meaningless tempfile to create a first commit"
+create_repo "$dir/upstream"
+commit_new_file "$dir/upstream" "upstream-1"
+
+# Add the subtree
+cd "$dir/proj"
+git-subtree add "file://$dir/upstream"
+git-subtree fetch upstream
+
+# Try to merge into root
+git-subtree merge upstream/master
+# Try to fool it into merging into root
+git-subtree merge upstream/master .
+mkdir ttdir
+git-subtree merge upstream/master ttdir/..
+
+# Make sure nothing's changed.
+git status
+
+cd "$dir"
+rm -rf upstream proj
+
+STDOUT:
+# On branch master
+nothing to commit (working directory clean)
+STDERR:
+can only merge into a subdirectory of a git repository.
+can only merge into a subdirectory of a git repository.
+can only merge into a subdirectory of a git repository.

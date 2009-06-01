@@ -355,7 +355,16 @@ merge() {
   [ "x$branch" = "x" ] && die "usage: $cmdname merge <branch> [<directory>]"
   absdir="$(git rev-parse --show-prefix)$directory"
 
+  # print a sane error message if the branch doesn't exist
   check_branch_name "$branch"
+
+  # refuse to merge into the root dir
+  dir="$directory"
+  [ -z "$dir" ] && dir='.'
+  if [ -d "$dir" ]; then
+    msg="$(cd "$dir" && [ -n "$(git rev-parse --show-prefix)" ] && echo ok)"
+    [ "$msg" != "ok" ] && die "can only merge into a subdirectory of a git repository."
+  fi
 
   if [ "x$directory" = "x" ] || [ -e "$directory" ]; then
     # If the destination already exists, we need to actually merge
