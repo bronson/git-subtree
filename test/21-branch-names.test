@@ -1,6 +1,6 @@
-# Ensures that we show the correct branch, even when there are other
-# branches at the same commit.  Tests some pretty pathological branch
-# names.
+# Test some pretty pathological branch names.
+# Also, ensure we show the correct branch even when there are other
+# branches at the same commit.  
 
 . $MYDIR/utilities.sh
 
