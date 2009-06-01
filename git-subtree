@@ -7,6 +7,8 @@
 
 # This should work under bash, dash, ksh, zsh, hopefully any posix shell.
 
+# TODO: add git subtree list
+# TODO: Should we add git subtree mv and git subtree rm?
 # TODO: crib from http://github.com/apenwarr/git-subtree/tree/master
 #       to extract patches from the subtree.
 # TODO: (far in the future) can I have two subtrees cloned from the same
@@ -316,10 +318,14 @@ branch() {
 fetch_help=\
 "$cmdname fetch [<remote>]: fetches objects from the remote repo
   remote: The name of the remote to fetch from (see git remote).
-          Defaults to the current directory relative to git's root.
+          If the current directory is a subtree, it defaults to its remote.
+
+  Other than figuring out a default remote to use if you don't name one
+  on the command line, $cmdname fetch is exactly the same as git fetch.
 "
 fetch() {
   remotename="$1"
+
   if [ "x$remotename" = "x" ]; then
     curdir="$(git rev-parse --show-prefix)"
     [ "x$curdir" = "x" ] && die "You either need to be in a subdirectory or specify a branch name."
@@ -334,9 +340,9 @@ fetch() {
 
 merge_help=\
 "$cmdname merge <branch> [<directory>]
-  Merges the subtree into the current repository
+  Merges the subtree into a directory in the master repository.
     branch:    the remote tracking branch to merge, i.e. remote/master
-    directory: where to store the subtree (defaults to the current directory)
+    directory: where to merge the subtree (defaults to the current directory)
 
   Merging won't take you backward in time.  If you want to remove commits
   from a subtree, it might be easiest just to delete it and re-clone it.

@@ -1,10 +1,16 @@
-# This test calls subtree commands but doesn't name the remote
-# explicitly, the script determines it implicitly from the cwd.
+# This test tries to do everything as tersley as possible (clone and
+# pull instead of add, merge, fetch, merge).  It does it all on the
+# default master branch.
 
+# See 'longhand' for this test using the lower level commands.
+# See 'implicit-branch' for this test but on a different checkout
+
+# TODO: write implicit-branch test, including subtree merge fixes
 # TODO: make merge accept a plain branch name as well as a full RTB.
 # TODO: make merge accept a tag
 # TODO: make merge accept a sha1
 # TODO: make merge look up previous branch if not supplied
+# TODO: test what happens when you add a subtree that already has been added
 # TODO: automatically commit the results after merging
 # TODO: add a --no-commit option to clone, pull and merge.
 # TODO: ensure that merging to a tag and maybe a specific sha1 work too.
@@ -33,11 +39,11 @@ git commit -q -m "add upstream subtree"
 commit_new_file "$dir/upstream" "upstream-3"
 
 cd "$dir/proj/upstream"
-git-subtree pull master
+git-subtree pull
 git commit -q -m "update upstream subtree"
 
-# make sure all files are checked in
 cd "$dir/proj"
+# make sure all files are checked in
 git ls-files -o -m
 
 echo "BRANCH: "
