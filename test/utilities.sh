@@ -23,3 +23,12 @@ commit_new_file() {
   popd > /dev/null
 }
  
+
+# creates a repository named proj that will contain the subtree and
+# a repository named upstream that is intended to be a subtree.
+set_up_a_repo_and_one_upstream() {
+  create_repo "$dir/proj"
+  commit_new_file "$dir/proj" "tempfile"
+  create_repo "$dir/upstream"
+  commit_new_file "$dir/upstream" "upstream-1"
+}

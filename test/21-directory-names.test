@@ -6,12 +6,7 @@
 
 MKDIR dir
 
-# set up the test repos
-create_repo "$dir/proj"
-commit_new_file "$dir/proj" "tempfile"
-create_repo "$dir/upstream"
-commit_new_file "$dir/upstream" "upstream-1"
-cd "$dir/upstream"
+set_up_a_repo_and_one_upstream
 
 
 directories=\

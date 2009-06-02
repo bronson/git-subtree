@@ -5,17 +5,12 @@
 
 MKDIR dir
 
-# set up the empty repo
-create_repo "$dir/repo"
-cd "$dir/repo"
-commit_new_file "$dir/repo" "tempfile"
-create_repo "$dir/upstream"
-commit_new_file "$dir/upstream" "upstream-1"
+set_up_a_repo_and_one_upstream
 commit_new_file "$dir/upstream" "upstream-2"
 
 # try to add the subtree to the empty repo
 # need to check every method that adds a subtree
-cd "$dir/repo"
+cd "$dir/proj"
 
 mkdir nonbranchdir
 git-subtree branch nonbranchdir
@@ -40,10 +35,10 @@ git-subtree branch
 
 # and, just to sanity check, this should succeed
 # and print "upstream/master" on stdout.
-cd "$dir/repo/upstream"
+cd "$dir/proj/upstream"
 git-subtree branch
 
-rm -rf "$dir/repo" "$dir/upstream"
+rm -rf "$dir/proj" "$dir/upstream"
 
 STDERR:
 this repo doesn't have any subtrees.
