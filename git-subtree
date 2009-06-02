@@ -133,7 +133,8 @@ parse_branchfile() {
   # but double_quote_escape only produces escaped backslashes so it's OK.
   bfgot= bfline= bfdir= bfref=
   while read -r line; do
-    if [ -z "$line" ]; then
+    if [ "$line" = '""' ]; then
+      # echo "$callback" "\"$bfline\"" "\"$bfdir\"" "\"$bfref\"" >&2
       "$callback" "$bfline" "$bfdir" "$bfref"
       if [ "$?" != 0 ]; then return $?; fi
       bfgot= bfline= bfdir= bfref=
@@ -143,7 +144,7 @@ parse_branchfile() {
     else die "garbage in $branchfile: $line"
     fi
   done <<EOL
-$(perl -e 'require "shellwords.pl"; while(<>) { chomp; print "$_\n"; unless(/^\s*#/) { for(shellwords($_)) { print "$_\n" }}; print "\n" }' "$branchfile")
+$(perl -e 'require "shellwords.pl"; while(<>) { chomp; print "$_\n"; unless(/^\s*#/) { for(shellwords($_)) { print "$_\n" }}; print "\"\"\n" }' "$branchfile")
 EOL
   [ -n "$bfgot" ] && "$callback" "$bfline" "$bfdir" "$bfref"
 }
