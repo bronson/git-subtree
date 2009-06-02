@@ -168,9 +168,6 @@ store_remote_tracking_branch() {
   tracking="$1"
   directory="${2%/}"
 
-  split_tracking_branch "$tracking"
-  [ "$?" != "0" ] && die "Can't save remote tracking branch."
-
   escdir="$(double_quote_escape "$directory")"
   esctrack="$(double_quote_escape "$tracking")"
 
