@@ -138,9 +138,9 @@ parse_branchfile() {
       IFS="$oldIFS"
       # echo "$callback" "<<$bfline>>" "<<$bfdir>>" "<<$bfref>>" >&2 # DBG
       "$callback" "$bfline" "$bfdir" "$bfref"
-      IFS=
-      if [ "$?" != 0 ]; then return $?; fi
-      bfgot= bfline= bfdir= bfref=
+      ret="$?"
+      if [ "$ret" != "0" ]; then return $ret; fi
+      IFS= bfgot= bfline= bfdir= bfref=
     elif [ -z "$bfline" ]; then bfline="$line"; bfgot=1
     elif [ -z "$bfdir" ]; then bfdir="$line" #; echo dir="<<$bfdir>>" >&2 # DBG
     elif [ -z "$bfref" ]; then bfref="$line" #; echo ref="<<$bfref>>" >&2 # DBG
@@ -151,6 +151,7 @@ $(perl -e 'require "shellwords.pl"; while(<>) { chomp; print "$_\n"; unless(/^\s
 EOL
   IFS="$oldIFS"
   [ -n "$bfgot" ] && "$callback" "$bfline" "$bfdir" "$bfref"
+  return 0
 }
 
 skip_by_directory() {
@@ -192,7 +193,7 @@ store_remote_tracking_branch() {
 match_by_directory() {
   if [ "$2" = "$directory" ]; then
     matched_ref="$3"
-    return 1
+    return 2
   fi
   return 0
 }
@@ -202,7 +203,7 @@ find_remote_tracking_branch() {
   [ -z "$directory" ] && die "please specify a subtree."
 
   parse_branchfile match_by_directory
-  [ "$?" != "1" ] && die "could not find $directory in known subtrees."
+  [ "$?" != "2" ] && die "could not find $directory in known subtrees."
   [ -z "$matched_ref" ] && die "no matched_ref for $directory?  WTF?"
 
   echo "$matched_ref"
