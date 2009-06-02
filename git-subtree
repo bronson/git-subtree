@@ -7,7 +7,6 @@
 
 # This should work under bash, dash, ksh, zsh, hopefully any posix shell.
 
-# TODO: Should we add git subtree mv and git subtree rm?
 # TODO: add and clone commands should support -t: restrict branches pulled
 # TODO: crib from http://github.com/apenwarr/git-subtree/tree/master
 #       to extract patches from the subtree.
@@ -263,17 +262,12 @@ pull_help=\
     remotename: see $cmdname add
 "
 pull() {
-  branch="$1"
-  directory="$2"
-  remotename="$3"
+  pullbranch="$1"
+  pulldirectory="$2"
+  pullremotename="$3"
 
-  curdir="$(git rev-parse --show-prefix)"
-
-  [ "x$directory" = "x" ] && directory="."
-  [ "x$remotename" = "x" ] && remotename="${curdir%/}"
-
-  fetch "$remotename"
-  merge "$branch" "$directory"
+  fetch "$pullremotename"
+  merge "$pullbranch" "$pulldirectory"
 }
 
 
@@ -345,17 +339,19 @@ fetch_help=\
   on the command line, $cmdname fetch is exactly the same as git fetch.
 "
 fetch() {
-  remotename="$1"
+  remote="$1"
 
-  if [ "x$remotename" = "x" ]; then
-    curdir="$(git rev-parse --show-prefix)"
-    [ "x$curdir" = "x" ] && die "You either need to be in a subdirectory or specify a branch name."
-    remotename="${curdir%/}"
-    git remote show "$remotename" >/dev/null 2>&1
-    [ "$?" != "0" ] && die "$remotename is not a subtree.  Run git remote to show possible subtrees."
+  if [ "x$remote" = "x" ]; then
+    # User didn't give a remote, check if current dir is a subtree
+    directory="$(git rev-parse --show-prefix)"
+    directory="${directory%/}"
+    branch="$(parse_branchfile match_by_directory)"
+    [ -z "$branch" ] && die "$directory is not a subtree. If you're sure it is, specify a remote."
+    split_tracking_branch "$branch"
+    # now remote contains the name of the branch
   fi
 
-  run_quiet git fetch -q "$remotename"
+  run_quiet git fetch -q "$remote"
 }
 
 
@@ -396,7 +392,6 @@ merge() {
     branch="$(parse_branchfile match_by_directory)"
     [ -z "$branch" ] && die "$reldir is not a subtree. If you're sure it is, specify a branch."
   fi
-
 
   # print a sane error message if the branch doesn't exist
   check_branch_name "$branch"

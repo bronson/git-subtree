@@ -5,16 +5,14 @@
 # See 'longhand' for this test using the lower level commands.
 # See 'implicit-branch' for this test but on a different checkout
 
-# TODO: fetch and pull should look up the remote from the branchfile.
-#        (get the final if "xblah" out of pull())
 # TODO: make merge accept a plain branch name as well as a full RTB.
 # TODO: make merge accept a tag
 # TODO: make merge accept a sha1
-# TODO: make merge look up previous branch if not supplied
 # TODO: test what happens when you add a subtree that already has been added
 # TODO: automatically commit the results after merging
 # TODO: add a --no-commit option to clone, pull and merge.
 # TODO: ensure that merging to a tag and maybe a specific sha1 work too.
+# TODO: subtree commands work in the subtree root but not its children.
 
 # exec 2>&1; set -x
 
