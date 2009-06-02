@@ -8,6 +8,7 @@
 # This should work under bash, dash, ksh, zsh, hopefully any posix shell.
 
 # TODO: Should we add git subtree mv and git subtree rm?
+# TODO: add and clone commands should support -t: restrict branches pulled
 # TODO: crib from http://github.com/apenwarr/git-subtree/tree/master
 #       to extract patches from the subtree.
 # TODO: (far in the future) can I have two subtrees cloned from the same
@@ -90,7 +91,7 @@ double_quote_escape() {
 split_tracking_branch() {
   tracking="$1"
 
-  for line in "$(git remote)"; do
+  while read line; do
     ttb="${tracking#"$line/"}"
     if [ "$ttb" != "$tracking" ]; then
       if [ $((${#tracking} - ${#ttb})) -gt ${#remote} ]; then
@@ -98,12 +99,15 @@ split_tracking_branch() {
         branch="$ttb"
       fi
     fi
-  done
+  done <<EOL
+$(git remote)
+EOL
 
   if [ -z "$remote" ] || [ -z "$branch" ]; then
     echo "Could not find remote tracking branch from $tracking?! remote=$remote branch=$branch"
     return 1
   fi
+  return 0
 }
 
 find_branchfile() {
@@ -359,7 +363,7 @@ list_help=\
 "
 list() {
   if [ "$1" = "-v" ]
-  then parse_branchfile_v print_directory
+  then parse_branchfile print_directory_v
   else parse_branchfile print_directory
   fi
 }
