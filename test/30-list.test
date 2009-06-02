@@ -23,12 +23,26 @@ git commit -q -m "add upstream subtree"
 echo "first list:"
 git-subtree list
 
-# git-subtree clone "file://$dir/upstream-2" upstream-2 "- \$?"
-# echo "second list:"
-# git-subtree list
-# git commit -q -m "add upstream subtree"
+git-subtree clone "file://$dir/upstream-2" master "- \$?" dashremote
+git commit -q -m "add upstream subtree"
+echo "second list:"
+git-subtree list
+
+git-subtree clone "file://$dir/upstream-3" master " " spaceremote
+git commit -q -m "add upstream subtree"
+echo "third list, verbose:"
+git-subtree list -v
 
 cd "$dir"
 rm -rf upstream-1 upstream-2 upstream-3 proj
 
 STDOUT:
+first list:
+  upstream-1
+second list:
+  upstream-1
+  - $?
+third list, verbose:
+  upstream-1: upstream-1/master
+  - $?: dashremote/master
+   : spaceremote/master
