@@ -5,7 +5,6 @@
 # See 'longhand' for this test using the lower level commands.
 # See 'implicit-branch' for this test but on a different checkout
 
-# TODO: make merge accept a plain branch name as well as a full RTB.
 # TODO: make merge accept a tag
 # TODO: make merge accept a sha1
 # TODO: test what happens when you add a subtree that already has been added

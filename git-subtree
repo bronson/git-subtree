@@ -214,12 +214,12 @@ check_branch_name() {
   
   # read from heredoc so command won't occur in a subshell
   while read -r line ; do
-    [ "$line" = "$branch" ] && return
+    [ "$line" = "$branch" ] && return 0
   done <<EOL
 $(git branch -r | sed -e 's/^\s*//')
 EOL
 
-  die "Branch $branch does not exist!"
+  return 2
 }
 
 
@@ -370,11 +370,19 @@ list() {
 }
 
 
+# looks in the branchfile for absdir, sets mergebranch if found
+merge_look_up_branch() {
+  directory="${absdir%/}"
+  mergebranch="$(parse_branchfile match_by_directory)"
+  [ -z "$mergebranch" ] && die "$reldir is not a subtree. If you're sure it is, specify a branch."
+}
+
 merge_help=\
 "$cmdname merge <branch> [<directory>]
   Merges the subtree into a directory in the master repository.
-    branch:    the remote tracking branch to merge, i.e. remote/master
-        defaults to the branch that was most recently merged into this subtree.
+    branch:    the branch to merge, i.e. remote/master or, if you're in
+        a subtree, simply 'master' will suffice.  If not supplied, defaults
+        to the branch that was most recently merged into this subtree.
     directory: where to merge the subtree (defaults to the current directory)
 
   Merging won't take you backward in time.  If you want to remove commits
@@ -388,13 +396,19 @@ merge() {
   absdir="$(git rev-parse --show-prefix)$reldir"
 
   if [ "x$mergebranch" = "x" ]; then
-    directory="${absdir%/}"
-    mergebranch="$(parse_branchfile match_by_directory)"
-    [ -z "$mergebranch" ] && die "$reldir is not a subtree. If you're sure it is, specify a branch."
+    merge_look_up_branch
   fi
 
-  # print a sane error message if the branch doesn't exist
+  # only checks remotes so it's OK to pass an unqualified branch
   check_branch_name "$mergebranch"
+  if [ "$?" = "2" ]; then
+    # maybe it wasn't a full remote tracking branch, try qualifying it
+    shortbranch="$mergebranch"
+    merge_look_up_branch
+    split_tracking_branch "$mergebranch"
+    check_branch_name "$remote/$shortbranch"
+    [ "$?" = "2" ] && die "Branch $shortbranch does not exist!"
+  fi
 
   # refuse to merge into the root dir
   dir="$reldir"
