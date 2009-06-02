@@ -23,7 +23,7 @@ MKDIR dir
 
 # set up the test repos
 create_repo "$dir/proj"
-commit_new_file "$dir/proj" "tempfile" "add meaningless tempfile to create a first commit"
+commit_new_file "$dir/proj" "tempfile"
 create_repo "$dir/upstream"
 commit_new_file "$dir/upstream" "upstream-1"
 commit_new_file "$dir/upstream" "upstream-2"
@@ -65,8 +65,8 @@ STDOUT:
 BRANCH: 
 * master
 COMMITS (unordered):
-add meaningless tempfile to create a first commit
 add upstream subtree
+commit_new_file: create tempfile
 commit_new_file: create upstream-1
 commit_new_file: create upstream-2
 commit_new_file: create upstream-3
