@@ -81,7 +81,7 @@ double_quote_escape() {
   if [ "$bad_char_pos" != "0" ]; then
     str="\"$(echo "$str" | sed 's/\([$`"\]\)/\\\1/g')\""
   fi
-  echo $str
+  echo "$str"
 }
 
 # git doesn't offer a way to split a remote tracking branch into the name
@@ -127,8 +127,8 @@ parse_branchfile() {
   find_branchfile
   [ ! -f "$branchfile" ] && die "this repo doesn't have any subtrees."
 
-  # use perl to parse the branchfile since the shell would require eval
-  # to parse the quoting or one hell of a lot of code.  Ugh.
+  # use perl to parse the branchfile since parsing the quoting would
+  # require either eval (security!) or one hell of a lot of code.  Ugh.
   # using perl's shellwords.pl is not ideal since it converts '\a' to 'a'
   # but double_quote_escape only produces escaped backslashes so it's OK.
   oldIFS="$IFS"; IFS=
