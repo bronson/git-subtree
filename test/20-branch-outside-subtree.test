@@ -12,12 +12,15 @@ commit_new_file "$dir/upstream" "upstream-2"
 # need to check every method that adds a subtree
 cd "$dir/proj"
 
+echo "no subtrees:" >&2
 mkdir nonbranchdir
 git-subtree branch nonbranchdir
 [ "$?" = "0" ] && echo "WTF, it exited normally?"
 
 git-subtree clone "file://$dir/upstream"
 
+echo >&2
+echo "some branches:" >&2
 git-subtree branch
 [ "$?" = "0" ] && echo "WTF, it exited normally?"
 
@@ -41,7 +44,10 @@ git-subtree branch
 rm -rf "$dir/proj" "$dir/upstream"
 
 STDERR:
+no subtrees:
 this repo doesn't have any subtrees.
+
+some branches:
 please specify a subtree.
 could not find nondir in known subtrees.
 could not find nonbranchdir in known subtrees.

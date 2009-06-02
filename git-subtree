@@ -192,7 +192,7 @@ store_remote_tracking_branch() {
 
 match_by_directory() {
   if [ "$2" = "$directory" ]; then
-    matched_ref="$3"
+    echo "$3"
     return 2
   fi
   return 0
@@ -202,9 +202,9 @@ find_remote_tracking_branch() {
   directory="${1%/}"
   [ -z "$directory" ] && die "please specify a subtree."
 
-  parse_branchfile match_by_directory
-  [ "$?" != "2" ] && die "could not find $directory in known subtrees."
-  [ -z "$matched_ref" ] && die "no matched_ref for $directory?  WTF?"
+  matched_ref="$(parse_branchfile match_by_directory)"
+  [ "$?" = "1" ] && die  # propagate death
+  [ -z "$matched_ref" ] && die "could not find $directory in known subtrees."
 
   echo "$matched_ref"
 }
@@ -269,12 +269,11 @@ pull() {
 
   curdir="$(git rev-parse --show-prefix)"
 
-  [ "x$branch" = "x" ] && branch="master"
   [ "x$directory" = "x" ] && directory="."
   [ "x$remotename" = "x" ] && remotename="${curdir%/}"
 
   fetch "$remotename"
-  merge "$remotename/$branch" "$directory"
+  merge "$branch" "$directory"
 }
 
 
@@ -379,6 +378,7 @@ merge_help=\
 "$cmdname merge <branch> [<directory>]
   Merges the subtree into a directory in the master repository.
     branch:    the remote tracking branch to merge, i.e. remote/master
+        defaults to the branch that was most recently merged into this subtree.
     directory: where to merge the subtree (defaults to the current directory)
 
   Merging won't take you backward in time.  If you want to remove commits
@@ -386,30 +386,36 @@ merge_help=\
 "
 merge() {
   branch="$1"
-  directory="$2"
-  [ "$directory" = "." ] && directory=
+  reldir="$2"
 
-  [ "x$branch" = "x" ] && die "usage: $cmdname merge <branch> [<directory>]"
-  absdir="$(git rev-parse --show-prefix)$directory"
+  [ "$reldir" = "." ] && reldir=
+  absdir="$(git rev-parse --show-prefix)$reldir"
+
+  if [ "x$branch" = "x" ]; then
+    directory="${absdir%/}"
+    branch="$(parse_branchfile match_by_directory)"
+    [ -z "$branch" ] && die "$reldir is not a subtree. If you're sure it is, specify a branch."
+  fi
+
 
   # print a sane error message if the branch doesn't exist
   check_branch_name "$branch"
 
   # refuse to merge into the root dir
-  dir="$directory"
+  dir="$reldir"
   [ -z "$dir" ] && dir='.'
   if [ -d "$dir" ]; then
     msg="$(cd "$dir" && [ -n "$(git rev-parse --show-prefix)" ] && echo ok)"
     [ "$msg" != "ok" ] && die "can only merge into a subdirectory of a git repository."
   fi
 
-  if [ "x$directory" = "x" ] || [ -e "$directory" ]; then
+  if [ "x$reldir" = "x" ] || [ -e "$reldir" ]; then
     # If the destination already exists, we need to actually merge
     run_quiet git merge -s subtree --no-commit "$branch"
   else
     # otherwise, record a merge and read the tree
     run_quiet git merge -s ours --no-commit "$branch"
-    run git read-tree --prefix="$directory" -u "$branch"
+    run git read-tree --prefix="$reldir" -u "$branch"
   fi
 
   store_remote_tracking_branch "$branch" "$absdir"
