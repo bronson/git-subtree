@@ -1,0 +1,34 @@
+# Ensure that the list command works.
+
+. $MYDIR/utilities.sh
+
+MKDIR dir
+
+# set up the test repos
+create_repo "$dir/proj"
+commit_new_file "$dir/proj" "tempfile"
+create_repo "$dir/upstream-1"
+commit_new_file "$dir/upstream-1" "upstream-1-1"
+create_repo "$dir/upstream-2"
+commit_new_file "$dir/upstream-2" "upstream-2-1"
+create_repo "$dir/upstream-3"
+commit_new_file "$dir/upstream-3" "upstream-3-1"
+
+
+# Add the subtree
+cd "$dir/proj"
+
+git-subtree clone "file://$dir/upstream-1"
+git commit -q -m "add upstream subtree"
+echo "first list:"
+git-subtree list
+
+# git-subtree clone "file://$dir/upstream-2" upstream-2 "- \$?"
+# echo "second list:"
+# git-subtree list
+# git commit -q -m "add upstream subtree"
+
+cd "$dir"
+rm -rf upstream-1 upstream-2 upstream-3 proj
+
+STDOUT:

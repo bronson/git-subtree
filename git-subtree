@@ -7,7 +7,6 @@
 
 # This should work under bash, dash, ksh, zsh, hopefully any posix shell.
 
-# TODO: add git subtree list
 # TODO: Should we add git subtree mv and git subtree rm?
 # TODO: crib from http://github.com/apenwarr/git-subtree/tree/master
 #       to extract patches from the subtree.
@@ -22,7 +21,7 @@
 # usage: $ DRY_RUN=1 git-subtree add http://foo
 
 cmdname="git-subtree"
-commands="help clone pull branch fetch merge diff add"
+commands="help clone pull add branch diff fetch list merge"
 
 
 run() {
@@ -149,6 +148,7 @@ skip_by_directory() {
   if [ "$2" != "$directory" ]; then
     echo "$1"
   fi
+  return 0
 }
 
 # I couldn't find a good way to query the commit history to determine
@@ -185,6 +185,7 @@ match_by_directory() {
     matched_ref="$3"
     return 1
   fi
+  return 0
 }
 
 find_remote_tracking_branch() {
@@ -346,6 +347,21 @@ fetch() {
   fi
 
   run_quiet git fetch -q "$remotename"
+}
+
+
+print_directory() { [ -n "$2" ] && echo "  $2"; return 0; }
+print_directory_v() { [ -n "$2" ] && echo "  $2: $3"; return 0; }
+
+list_help=\
+"$cmdname list [-v]: lists the subtrees in the current repository.
+  -v: also display each subtree's most recent merge.
+"
+list() {
+  if [ "$1" = "-v" ]
+  then parse_branchfile_v print_directory
+  else parse_branchfile print_directory
+  fi
 }
 
 
