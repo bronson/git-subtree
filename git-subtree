@@ -235,21 +235,21 @@ clone_help=\
 clone() {
   ensure_repo_has_commits
 
-  remoteurl="$1"
-  branch="$2"
-  directory="$3"
+  cloneurl="$1"
+  clonebranch="$2"
+  clonedir="$3"
   remotename="$4"
 
   curdir="$(git rev-parse --show-prefix)"
 
-  [ "x$remoteurl" = "x" ] && die "usage: $cmdname clone <name> <url>"
-  [ "x$branch" = "x" ] && branch="master"
-  [ "x$directory" = "x" ] && directory="$(guess_dir_name "$remoteurl")"
-  [ "x$remotename" = "x" ] && remotename="$curdir$directory"
+  [ "x$cloneurl" = "x" ] && die "usage: $cmdname clone <name> <url>"
+  [ "x$clonebranch" = "x" ] && clonebranch="master"
+  [ "x$clonedir" = "x" ] && clonedir="$(guess_dir_name "$cloneurl")"
+  [ "x$remotename" = "x" ] && remotename="$curdir$clonedir"
 
-  add "$remoteurl" "$remotename"
+  add "$cloneurl" "$remotename"
   fetch "$remotename"
-  merge "$remotename/$branch" "$directory"
+  merge "$remotename/$clonebranch" "$clonedir"
 }
 
 
@@ -381,20 +381,20 @@ merge_help=\
   from a subtree, it might be easiest just to delete it and re-clone it.
 "
 merge() {
-  branch="$1"
+  mergebranch="$1"
   reldir="$2"
 
   [ "$reldir" = "." ] && reldir=
   absdir="$(git rev-parse --show-prefix)$reldir"
 
-  if [ "x$branch" = "x" ]; then
+  if [ "x$mergebranch" = "x" ]; then
     directory="${absdir%/}"
-    branch="$(parse_branchfile match_by_directory)"
-    [ -z "$branch" ] && die "$reldir is not a subtree. If you're sure it is, specify a branch."
+    mergebranch="$(parse_branchfile match_by_directory)"
+    [ -z "$mergebranch" ] && die "$reldir is not a subtree. If you're sure it is, specify a branch."
   fi
 
   # print a sane error message if the branch doesn't exist
-  check_branch_name "$branch"
+  check_branch_name "$mergebranch"
 
   # refuse to merge into the root dir
   dir="$reldir"
@@ -406,14 +406,14 @@ merge() {
 
   if [ "x$reldir" = "x" ] || [ -e "$reldir" ]; then
     # If the destination already exists, we need to actually merge
-    run_quiet git merge -s subtree --no-commit "$branch"
+    run_quiet git merge -s subtree --no-commit "$mergebranch"
   else
     # otherwise, record a merge and read the tree
-    run_quiet git merge -s ours --no-commit "$branch"
-    run git read-tree --prefix="$reldir" -u "$branch"
+    run_quiet git merge -s ours --no-commit "$mergebranch"
+    run git read-tree --prefix="$reldir" -u "$mergebranch"
   fi
 
-  store_remote_tracking_branch "$branch" "$absdir"
+  store_remote_tracking_branch "$mergebranch" "$absdir"
 }
 
 
