@@ -474,6 +474,7 @@ cmd="$1"
 for i in $commands; do
   if [ "$i" = "$cmd" ]; then
     shift
+    [ -n "$TRACE" ] && set -x
     "$cmd" "$@"
     exit $?
   fi
